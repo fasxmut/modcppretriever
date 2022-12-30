@@ -1,0 +1,157 @@
+[/
+	Copyright 2023 Fas Xmut
+
+	Distributed under the Boost Software License, Version 1.0.
+	(See accompanying file LICENSE_1_0.txt or copy at
+	http://www.boost.org/LICENSE_1_0.txt)
+]
+[article Use Concept Specialized Template, and Analyze Compiling Message
+	[quickbook 1.7]
+	[source-mode c++]
+]
+
+
+
+[h2 Use Unimplemented Primary Template]
+
+Primary template is unimplemented, aka. incomplete type.
+
+[!c++]
+```
+#include <concepts>
+#include <utxcpp/core.hpp>
+
+template <typename T>
+class print;
+
+template <std::integral T>
+class print<T>
+{
+public:
+	print()
+	{
+		utx::print("std::integral template");
+	}
+};
+
+template <std::floating_point T>
+class print<T>
+{
+public:
+	print()
+	{
+		utx::print("std::floating_point template");
+	}
+};
+
+int main()
+{
+	print<int>{}; // ok
+	print<bool>{}; // ok
+	print<utx::Pest>{}; // error
+}
+```
+
+[h4 Compiling ERROR: gcc]
+
+[!teletype]
+```
+error: invalid use of incomplete type ‘class print<utx::Pest>’
+```
+
+[h4 Compiling ERROR: clang]
+
+[!teletype]
+```
+error: implicit instantiation of undefined template 'print<utx::Pest>'
+```
+
+
+
+[h2 Merged-concepts Primary Template]
+
+How to merge std::integral and std::floating_point concepts:
+
+[!teletype]
+```
+template <typename T>
+concept real = std::integral<T> || std::floating_point<T>;
+```
+
+Good news is that utxcpp has already merged them:
+
+utx::kspt::real_number
+
+[!c++]
+```
+#include <concepts>
+#include <utxcpp/core.hpp>
+
+// Merged-concepts
+template <utx::kspt::real_number T>
+class print {};
+
+template <std::integral T>
+class print<T>
+{
+public:
+	print()
+	{
+		utx::print("std::integral template");
+	}
+};
+
+template <std::floating_point T>
+class print<T>
+{
+public:
+	print()
+	{
+		utx::print("std::floating_point template");
+	}
+};
+
+int main()
+{
+	print<int>{}; // ok
+	print<bool>{}; // ok
+	print<utx::Pest>{}; // error
+}
+```
+
+[h4 Compiling ERROR: gcc]
+
+[!teletype]
+```
+error: template constraint failure for ‘template<class T>  requires  real_number<T> class print’
+
+note: no operand of the disjunction is satisfied
+
+cc1plus: note: set ‘-fconcepts-diagnostics-depth=’ to at least 2 for more detail
+```
+
+[h4 Compiling ERROR: clang]
+
+[!teletype]
+```
+error: constraints not satisfied for class template 'print' [with T = utx::Pest]
+
+note: because 'utx::Pest' does not satisfy 'real_number'
+
+note: because 'utx::Pest' does not satisfy 'integral'
+
+note: because 'is_integral_v<utx::Pest>' evaluated to false
+
+note: and 'utx::Pest' does not satisfy 'floating_point'
+
+note: because 'is_floating_point_v<utx::Pest>' evaluated to false
+```
+
+
+
+[h2 Conclusion]
+
+To check incorrect using templates, unimplemented primary template is more human-friendly than merged-concepts, and gcc is more human-friendly than clang (in such a case).
+
+
+

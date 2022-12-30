@@ -1,0 +1,24 @@
+path-constant boost-root : /build/boost_1_81_0 ;
+path-constant qbk-media-root : $(boost-root)/doc/src ;
+path-constant this-webroot : ./html ;
+
+xml index : index.qbk ;
+
+boostbook target : index
+	:
+	<xsl:param>"chunk.first.sections=0"
+	<dependency>media
+	;
+
+install media :
+	[ glob
+		$(qbk-media-root)/*.css
+		$(qbk-media-root)/images/*.png
+	]
+	:
+	<location>$(this-webroot)
+	<install-source-root>$(qbk-media-root)
+	;
+
+
+

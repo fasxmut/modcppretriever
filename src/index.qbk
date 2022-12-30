@@ -1,0 +1,31 @@
+[/
+	Copyright 2022-2023 Fas Xmut
+
+	Distributed under the Boost Software License, Version 1.0.
+	(See accompanying file LICENSE_1_0.txt or copy at
+	http://www.boost.org/LICENSE_1_0.txt)
+]
+[book ModcppRetriever - Modern CPP Retriever
+	[quickbook 1.7]
+	[source-mode c++]
+	[copyright 2022 Fas Xmut]
+	[authors [Xmut, Fas]]
+	[license
+		Distributed under the Boost Software License, Version 1.0.
+		(See accompanying file LICENSE_1_0.txt or copy at
+		[@http://www.boost.org/LICENSE_1_0.txt])
+	]
+]
+
+[include template.qbk]
+
+[heading Utxcpp Fossil]
+
+Here: [@https://tiv.cc/modcppretriever]
+
+Parent: [@https://tiv.cc]
+
+Github: [@https://github.com/fasxmut/modcppretriever]
+
+
+
