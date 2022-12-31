@@ -1,0 +1,100 @@
+[/
+	Copyright 2023 Fas Xmut
+
+	Distributed under the Boost Software License, Version 1.0.
+	(See accompanying file LICENSE_1_0.txt or copy at
+	http://www.boost.org/LICENSE_1_0.txt)
+]
+[article Template Rvalue Reference
+	[quickbook 1.7]
+	[source-mode c++]
+]
+
+
+
+cpp: c++
+
+
+
+[h2 Rvalue reference]
+
+Rvalue reference accepts Rvalue, but does not accepts Lvalue.
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+
+void fn(utx::i32 &&) {}
+
+int main()
+{
+// fn accepts Rvalue, but does not accept Lvalue.
+	fn(123); // OK
+	utx::i32 x;
+	// fn(x); // ERROR
+}
+```
+
+
+
+[h2 Template Rvalue Reference]
+
+Template Rvalue reference accepts both Lvalue and Rvalue.
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+
+template <typename T>
+void fn(T &&) {}
+
+int main()
+{
+// OK: fn accepts both Lvalue and Rvalue.
+	fn(123);
+	utx::i32 x;
+	fn(x);
+}
+```
+
+
+
+[h2 Template Rvalue Reference: decay]
+
+After using std::decay_t or std::remove_reference_t, template Rvalue reference does not accept Lvalue again.
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+
+template <typename T>
+void fn(std::remove_reference_t<T> &&) {}
+
+int main()
+{
+// fn accepts Rvalue, but does not accept Lvalue again.
+	fn<utx::i32>(123); // OK
+	utx::i32 x;
+	// fn<utx::i32>(x); // ERROR
+}
+```
+
+
+
+[h2 More Issues]
+
+Sometimes [*std::remove_reference_t] is not enough to satisfy demand, for example you want to accept Lvalue or Rvalue, but not both, when the template inferences to a "const". 
+
+In such case, you will need more:
+
+[!teletype]
+```
+std::remove_cvref_t
+std::remove_const_t
+std::remove_reference_t
+std::remove_cv_t
+std::decay_t
+```
+
+
+

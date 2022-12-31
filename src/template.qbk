@@ -12,6 +12,7 @@
 
 [include template-concept-specialized-template.qbk]
 [include template-metaprogramming-make-tuple.qbk]
+[include template-rvalue-reference.qbk]
 
 
 
