@@ -1,0 +1,81 @@
+[/
+	Copyright 2023 Fas Xmut
+
+	Distributed under the Boost Software License, Version 1.0.
+	(See accompanying file LICENSE_1_0.txt or copy at
+	http://www.boost.org/LICENSE_1_0.txt)
+]
+[article Template Meta Programming: Make Tuple
+	[quickbook 1.7]
+	[source-mode c++]
+]
+
+
+
+[h2 make tuple]
+
+class vt: 
+
+We use type operator and operator<<, so we do not need a "constexpr static auto value" any more.
+
+Use utxcpp: utx::print_tuples
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <tuple>
+
+template <utx::kspt::printable auto value>
+class vt
+{
+public:
+// We use type operator and operator<<, so we do not need a "constexpr static auto value" any more.
+	operator std::decay_t<decltype(value)> ()
+	{
+		return value;
+	}
+	friend std::ostream & operator<<(std::ostream & os, const vt<value> & v)
+	{
+		return os << value;
+	}
+};
+
+// Primary Template
+template <utx::i32 value, typename ... type_list>
+class make_tuple
+{
+public:
+	// Trick is here:
+	// Call make_real_tuple<value-1, ...
+	// and add self vt<value> to the type_list.
+	// type_list ... can be empty.
+	using tuple = typename make_tuple<value-1, vt<value>, type_list ...>::tuple;
+};
+
+// Partial specialized template
+template <typename ... type_list>
+class make_tuple<0, type_list ...>
+{
+public:
+	// type_list contains all types transfered from its parent calling.
+	using tuple = std::tuple<vt<0>, type_list ...>;
+};
+
+// a type alias
+template <utx::i32 last>
+using make_tuple_t = typename make_tuple<last>::tuple;
+
+int main()
+{
+	// Create tuple types now
+	using t100 = make_tuple_t<100>;
+	using t50 = make_tuple_t<50>;
+	using t25 = make_tuple_t<25>;
+
+	// Print all tuples
+	utx::print_tuples(t100{}, t50{}, t25{});
+}
+```
+
+
+
