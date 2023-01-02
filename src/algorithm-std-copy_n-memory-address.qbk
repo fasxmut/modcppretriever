@@ -1,0 +1,138 @@
+[/
+	Copyright 2023 Fas Xmut
+
+	Distributed under the Boost Software License, Version 1.0.
+	(See accompanying file LICENSE_1_0.txt or copy at
+	http://www.boost.org/LICENSE_1_0.txt)
+]
+[article std::copy_n: copy memory or address
+	[quickbook 1.7]
+	[source-mode c++]
+]
+
+
+
+cpp: c++
+
+
+
+[h2 std::copy_n: copy memory]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <algorithm>
+#include <array>
+#include <bit>
+
+class fizz_t
+{
+private:
+	utx::i32 x{};
+	utx::f64 y{};
+	std::array<utx::i32, 6> z{};
+public:
+	fizz_t() = default;
+	fizz_t(utx::i32 x, utx::f64 y, const decltype(z) & z):
+		x{x},
+		y{y},
+		z{z}
+	{
+	}
+	void print() const
+	{
+		utx::print(x, '\n', y);
+		utx::print_all(z);
+		utx::print();
+	}
+	
+	bool operator==(const fizz_t & fizz) const
+	{
+		return (x==fizz.x)&&(y==fizz.y)&&(z==fizz.z);
+	}
+	bool operator!=(const fizz_t & fizz) const
+	{
+		return !(*this == fizz);
+	}
+};
+
+int main()
+try
+{
+	fizz_t f1{123, 1.23, {1,2,3,4,5,6}};
+	f1.print();
+	
+	fizz_t f2;
+	f2.print();
+	
+	utx::rt_assert(f1 != f2);
+	
+	std::copy_n(std::bit_cast<utx::u8 *>(&f1), sizeof f1,
+		std::bit_cast<utx::u8 *>(&f2));
+	
+	f2.print();
+	
+	utx::rt_assert(f1 == f2);
+}
+catch (std::exception & e)
+{
+	utx::printe(e.what());
+	return 1;
+}
+```
+
+[h2 std::copy_n: copy address]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <algorithm>
+#include <vector>
+#include <bit>
+
+class fizz_t
+{
+private:
+	std::vector<utx::i32> x{};
+	std::vector<utx::f32> y{};
+public:
+	fizz_t(const decltype(x) & x, const decltype(y) & y):
+		x{x}, y{y}
+	{}
+	fizz_t() = default;
+	
+	friend std::ostream & operator<<(std::ostream & os, const fizz_t & fizz)
+	{
+		utx::print_all_to(os, '\n', ' ', fizz.x, fizz.y);
+		return os;
+	}
+};
+
+int main()
+try
+{
+	fizz_t fizz{{1,2,3,4}, {1.2f, 2.3f}};
+	utx::print(fizz, '\n'); // so there are two '\n' here.
+	
+	utx::u64 address{};
+	address = std::bit_cast<utx::u64>(&fizz);
+	
+	fizz_t * ptr = nullptr;
+	utx::rt_assert(ptr == nullptr);
+	
+	std::copy_n(&address, 1, std::bit_cast<utx::u64 *>(&ptr));
+	
+	utx::rt_assert(ptr != nullptr);
+	utx::rt_assert(ptr == &fizz);
+	
+	utx::print(*ptr);
+}
+catch (std::exception & e)
+{
+	utx::printe(e.what());
+	return 1;
+}
+```
+
+
+

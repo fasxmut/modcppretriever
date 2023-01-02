@@ -18,7 +18,7 @@ cpp: c++
 
 [h2 Rvalue reference]
 
-Rvalue reference accepts Rvalue, but does not accepts Lvalue.
+Rvalue reference accepts Rvalue, but does not accept Lvalue.
 
 [!c++]
 ```

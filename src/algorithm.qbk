@@ -1,0 +1,16 @@
+[/
+	Copyright 2023 Fas Xmut
+
+	Distributed under the Boost Software License, Version 1.0.
+	(See accompanying file LICENSE_1_0.txt or copy at
+	http://www.boost.org/LICENSE_1_0.txt)
+]
+[chapter algorithm
+	[quickbook 1.7]
+	[source-mode c++]
+]
+
+[include algorithm-std-copy_n-memory-address.qbk]
+
+
+

@@ -18,12 +18,17 @@
 ]
 
 [include template.qbk]
+[include algorithm.qbk]
 
 [heading Utxcpp Fossil]
 
 Here: [@https://tiv.cc/modcppretriever]
 
 Parent: [@https://tiv.cc]
+
+Utxcpp Project: [@https://cppfx.xyz/fossil/utxcpp]
+
+Utxcpp Docs: [@https://cppfx.xyz/fx/static/docs/utxcpp/html]
 
 Github: [@https://github.com/fasxmut/modcppretriever]
 

@@ -18,7 +18,7 @@ class vt:
 
 We use type operator and operator<<, so we do not need a "constexpr static auto value" any more.
 
-Use utxcpp: utx::print_tuples
+Use utxcpp: utx::print_all(tuples)
 
 [!c++]
 ```
@@ -73,7 +73,7 @@ int main()
 	using t25 = make_tuple_t<25>;
 
 	// Print all tuples
-	utx::print_tuples(t100{}, t50{}, t25{});
+	utx::print_all(t100{}, t50{}, t25{});
 }
 ```
 
