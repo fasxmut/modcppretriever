@@ -6,7 +6,7 @@ xml index : index.qbk ;
 
 boostbook target : index
 	:
-	<xsl:param>"chunk.first.sections=0"
+	<xsl:param>"chunk.first.sections=1"
 	<dependency>media
 	;
 

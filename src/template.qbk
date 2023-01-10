@@ -5,7 +5,7 @@
 	(See accompanying file LICENSE_1_0.txt or copy at
 	http://www.boost.org/LICENSE_1_0.txt)
 ]
-[chapter template
+[reference template
 	[quickbook 1.7]
 	[source-mode c++]
 ]
@@ -13,6 +13,10 @@
 [include template-concept-specialized-template.qbk]
 [include template-metaprogramming-make-tuple.qbk]
 [include template-rvalue-reference.qbk]
+
+
+
+[$media/cpp-1600x80.jpg [align right]]
 
 
 

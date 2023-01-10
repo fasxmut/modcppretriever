@@ -1,0 +1,2267 @@
+[/
+	Copyright 2023 Fas Xmut
+
+	Distributed under the Boost Software License, Version 1.0.
+	(See accompanying file LICENSE_1_0.txt or copy at
+	http://www.boost.org/LICENSE_1_0.txt)
+]
+[article CPP20 Quick Look
+	[quickbook 1.7]
+	[source-mode c++]
+]
+
+
+
+[*[role indigo CPP20 (c++20) Quick Look: from cpp17 to cpp20]]
+
+
+
+[table
+[[CPP20 (c++20) Quick Look: from c++17 to c++20]]
+[[[$media/cpp20-400x100.jpg [align right] [width 400]]]]
+[[
+* [link cpp20_quick_look.concepts Concepts]
+* [link cpp20_quick_look.ranges Ranges]
+* [link cpp20_quick_look.modules Modules]
+* [link cpp20_quick_look.std_jthread_std_stop_token std::jthread: std::stop_token]
+* [link cpp20_quick_look.std_jthread_std_stop_callback std::jthread: std::stop_callback]
+* [link cpp20_quick_look.std_jthread_std_stop_source std::jthread: std::stop_source]
+* [link cpp20_quick_look.std_stop_token_and_cv std::jthread: std::stop_token and condition variable]
+* [link cpp20_quick_look.std_atomic_std_shared_ptr std::atomic std::shared_ptr, std::weak_ptr]
+* [link cpp20_quick_look.designated_initializers Designated Initializers]
+* [link cpp20_quick_look.three_way_comparison Three-Way Comparison]
+* [link cpp20_quick_look.map_contains  Map Contains]
+* [link cpp20_quick_look.range_based_for_initialization Range-Based For Loop with Initialization]
+* [link cpp20_quick_look.std_numbers std::numbers]
+* [link cpp20_quick_look.std_span std::span]
+* [link cpp20_quick_look.std_source_location std::source_location]
+* [link cpp20_quick_look.std_endian std::endian]
+* [link cpp20_quick_look.std_bit_cast std::bit_cast]
+* [link cpp20_quick_look.std_byteswap std::byteswap]
+* [link cpp20_quick_look.std_popcount std::popcount]
+* [link cpp20_quick_look.constexpr_consteval_constinit constexpr, consteval, constinit]
+* [link cpp20_quick_look.std_is_constant_evaluated std::is_constant_evaluated]
+* [link cpp20_quick_look.std_remove_cvref std::remove_cvref, std::decay, decltype, std::declval]
+* [link cpp20_quick_look.std_assume_aligned std::assume_aligned]
+* [link cpp20_quick_look.std_string_starts_with_ends_with std::string starts_with, ends_with]
+* [link cpp20_quick_look.safe_integral_comparisons Safe Integral Comparisons]
+* [link cpp20_quick_look.std_type_identity std::type_identity]
+* [link cpp20_quick_look.std_to_address std::to_address]
+* [link cpp20_quick_look.std_memory_order_be_scoped std::memory_order becomes scoped enumeration]
+* [link cpp20_quick_look.likely_and_unlikely Likely and Unlikely Attributes]
+* [link cpp20_quick_look.calendar_and_timezone Calendar and Timezone]
+* [link cpp20_quick_look.bounded_and_unbounded_array Bounded and Unbounded Array]
+* [link cpp20_quick_look.std_to_array std::to_array]
+* [link cpp20_quick_look.coroutines Coroutines]
+]]
+]
+
+[br][br][br][br]
+
+
+
+cppreference c++20: [@https://en.cppreference.com/w/cpp/20]
+
+Use utxcpp, utxcpp Docs: [@https://cppfx.xyz/fx/static/docs/utxcpp/html]
+
+[br][br][br][br]
+
+
+
+[h2 [_Concepts]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[h3 What is c++ concepts]
+
+The concepts library provides definitions of fundamental library concepts that can be used to perform compile-time validation of template arguments and perform function dispatch based on properties of types. These concepts provide a foundation for equational reasoning in programs.
+[br]
+[@https://en.cppreference.com/w/cpp/concepts]
+
+[h3 Write a concept]
+
+[*Define a simplest concept]
+
+[!c++]
+```
+template <typename type>
+concept type_pass  = true;
+```
+
+[*Define a little more complicated concept]
+
+[!c++]
+```
+template <typename type>
+class is_boolean
+{
+public:
+	constexpr static bool value = false;
+};
+
+template <>
+class is_boolean<bool>
+{
+public:
+	constexpr static bool value = true;
+};
+
+template <typename type>
+constexpr bool is_boolean_v = is_boolean<type>::value;
+
+template <typename type>
+concept boolean = is_boolean_v<type>;
+```
+
+[h3 Use the concepts]
+
+[!c++]
+```
+template <type_pass type>
+class test1
+{
+};
+
+template <boolean type>
+class test2
+{
+};
+
+int main()
+{
+// type_pass concept accepts any type.
+	test1<bool>{}; // OK
+	test1<utx::i32>{}; // OK
+	
+// boolean concept only accepts bool type.
+	test2<bool>{}; // OK
+	//test2<utx::i32>{}; // Failure
+	//test2<int>{}; // Failure
+	
+	type_pass auto x = 123; // int
+	type_pass auto y = 3.25; // double
+	
+	boolean auto z = true; // bool
+	
+	// boolean auto w = 9; // error: deduced initializer does not satisfy placeholder constraints
+}
+```
+
+[*std concepts defined in standard]
+
+[!teletype]
+```
+std::integral
+std::floating_point
+std::ranges::range
+std::same_as
+std::derived_from
+std::convertible_to
+std::copyable
+```
+
+And more:
+
+[@https://en.cppreference.com/w/cpp/concepts]
+
+[h3 Constraints]
+
+A constraint is a sequence of logical operations and operands that specifies requirements on template arguments. They can appear within requires expressions or directly as bodies of concepts.
+
+[*Conjunctions]
+
+The conjunction of two constraits is formed by using && in expression.
+
+```
+template <typename type>
+concept integral_vector = std::integral<typename type::value_type>
+	&& std::same_as<type, std::vector<typename type::value_type>>;
+```
+
+[*disjunctions]
+
+The disjunction of two constraits is formed by using || in expression.
+
+```
+template <typename type>
+concept real_number = std::integral<type> || std::floating_point<type>;
+```
+
+[@https://en.cppreference.com/w/cpp/language/constraints]
+
+[*Requires Clauses]
+
+
+```
+// OK
+template <typename type>
+concept concept_1 = requires (const type & val)
+{
+	{val.value} -> std::convertible_to<float>;
+};
+```
+
+```
+// OK
+template <typename type>
+concept concept_2 = requires {requires std::integral<type>;};
+```
+
+```
+// OK
+template <typename type>
+	requires std::integral<type>
+class test
+{
+};
+```
+
+```
+// ERROR
+template <typename type>
+concept concept_3 = requires std::integral<type>;
+```
+
+```
+// OK
+template <typename type>
+concept concept_4 = requires (const type & val)
+{
+	{val.value} -> std::same_as<double>;
+	val.begin(); // expression + ;
+	*val.begin(); // expression + ;
+	requires std::integral<typename type::value_type>;
+};
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_Ranges]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[h4 std::ranges::for_each]
+
+[!c++]
+```
+#include <iostream>
+#include <vector>
+#include <algorithm> // std::ranges::for_each
+#include <boost/lambda/lambda.hpp>
+
+namespace ld = boost::lambda;
+using ld::_1;
+
+int main()
+{
+	std::vector<int> vector{2,3,4,5};
+	std::ranges::for_each(vector, std::cout << _1 << ' ');
+	std::cout << '\n';
+}
+```
+
+[h4 std::views::transform, std::views::filter]
+
+[!c++]
+```
+#include <ranges> // std::views::transform, std::views::filter
+#include <vector>
+#include <boost/lambda/lambda.hpp>
+#include <algorithm> // std::ranges::for_each
+#include <numeric> // std::iota
+#include <utxcpp/core.hpp>
+
+namespace ld = boost::lambda;
+using ld::_1;
+
+int main()
+{
+	std::vector<utx::i32> vector(50);
+	std::iota(vector.begin(), vector.end(), 1);
+	auto v1 = vector;
+	auto v11 = v1 | std::views::transform(_1*_1) | std::views::filter(_1%2==0);
+	std::ranges::for_each(v11, std::cout << _1 << ' ');
+	std::cout << std::endl;
+}
+```
+
+[h4 std::views::iota, std::ranges::copy]
+
+[!c++]
+```
+#include <boost/lambda/lambda.hpp>
+namespace ld = boost::lambda;
+using ld::_1;
+using ld::_2;
+using ld::_3;
+#include <utxcpp/core.hpp>
+#include <ranges> // std::views::iota
+#include <algorithm> // std::ranges::copy
+#include <vector>
+
+int main()
+{
+	auto v1 = std::views::iota(1,16) | std::views::filter(_1%2==1) | std::views::transform(_1*1.3f);
+	std::vector<utx::f32> v2(std::ranges::distance(v1));
+	std::ranges::copy(v1, v2.begin());
+	utx::print_all(v2);
+/*
+output:
+1.300000 3.900000 6.500000 9.099999 11.700000 14.299999 16.900000 19.500000
+*/
+}
+```
+
+[h4 std::ranges::in_out_result]
+
+[!c++]
+```
+#include <boost/lambda/lambda.hpp>
+namespace ld = boost::lambda;
+using ld::_1;
+using ld::_2;
+using ld::_3;
+#include <ranges>
+#include <vector>
+#include <utxcpp/core.hpp>
+#include <algorithm> // std::ranges::copy, std::ranges::in_out_result
+
+int main()
+{
+	auto v1 = std::views::iota(1,33) | std::views::filter(_1%3==2);
+	std::vector<utx::i32> v2(32);
+	std::ranges::in_out_result last = std::ranges::copy(v1, v2.begin());
+	std::size_t in_size = std::ranges::distance(v1.begin(), last.in);
+	std::size_t out_size = std::ranges::distance(v2.begin(), last.out);
+	utx::print("in_size:", in_size, "out_size:", out_size);
+	
+	v2.resize(out_size);
+	utx::print("v2:");
+	utx::print_all(v2);
+/*
+Program Output:
+in_size: 11 out_size: 11
+v2:
+2 5 8 11 14 17 20 23 26 29 32
+*/
+}
+```
+
+[h4 std::ranges::transform]
+
+[!c++]
+```
+#include <boost/lambda/lambda.hpp>
+namespace ld = boost::lambda;
+using ld::_1;
+using ld::_2;
+using ld::_3;
+#include <vector>
+#include <utxcpp/core.hpp>
+#include <algorithm> // std::ranges::in_out_result
+
+int main()
+{
+	std::vector<utx::i32> out(11);
+	auto input = std::views::iota(1, (utx::i32)out.size()+1);
+	std::ranges::in_out_result last = std::ranges::transform(input, out.begin(), _1*_1);
+	
+	std::ranges::for_each(input.begin(), last.in, std::cout << _1 << ' ');
+	std::cout << '\n';
+	
+	std::ranges::for_each(out.begin(), last.out, std::cout << _1 << ' ');
+	std::cout << '\n';
+/*
+Program Output:
+1 2 3 4 5 6 7 8 9 10 11
+1 4 9 16 25 36 49 64 81 100 121
+*/
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_Modules]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[h4 * How to build c++20 modules with gcc]
+
+[*1. File: [role green fizz_box.cpp]]
+
+[!c++]
+```
+export module fizz_box;
+
+export namespace fb
+{
+	template <typename T>
+	class fizz_box
+	{
+	private:
+		T x{}, y{};
+	public:
+		virtual ~fizz_box() = default;
+		fizz_box() = default;
+		fizz_box(const T & x, const T & y):
+			x{x}, y{y}
+		{}
+		T sum() const {return x+y;}
+	};
+}
+```
+
+[*2. File: [role green main.cpp]]
+
+[!c++]
+```
+import fizz_box;
+
+#include <iostream>
+
+int main()
+{
+	fb::fizz_box<float> box;
+	fb::fizz_box box2{1.28, 3.44};
+	std::cout << box2.sum() << '\n'; // 4.72
+}
+```
+
+[*[role purple 3. Compile fizz_box.cpp]]
+
+[!teletype]
+```
+g++ fizz_box.cpp -c -fmodules-ts -std=c++20
+```
+
+[*[role purple 4. Compile main.cpp]]
+
+[!teletype]
+```
+g++ main.cpp -c -fmodules-ts -std=c++20
+```
+
+[*[role purple 5. Link fizz_box.o and main.o]]
+
+[!teletype]
+```
+g++ fizz_box.o main.o -o main
+```
+
+[h4 How to put include headers in a module]
+
+# [role green Add a module declaration "[*module;]" at the top of module source code]
+
+# [role green Put include headers between "[*module;]" and "[*export module fizz_box;]"]
+
+[*File: [role green fizz_box.cpp]]
+
+[!c++]
+```
+module;
+
+#include <iostream>
+
+export module fizz_box;
+
+export namespace fb
+{
+	template <typename T>
+	class fizz_box
+	{
+	private:
+		T value;
+	public:
+		virtual ~fizz_box() = default;
+		fizz_box() = delete;
+		fizz_box(const T & value):
+			value{value}
+		{
+		}
+		void print() const
+		{
+			std::cout << "value: " << value << '\n';
+		}
+	};
+}
+```
+
+[*File: [role green main.cpp]]
+
+[!c++]
+```
+import fizz_box;
+
+int main()
+{
+	fb::fizz_box<double> box{1.234};
+	box.print();
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::jthread: std::stop_token]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[*std::jthread]
+
+[*std::stop_token]
+
+[*std::jthread::request_stop] - Issues a stop request to the internal stop-state, if it has not yet already had stop requested.
+
+[*std::stop_token::stop_requested] - Checks if the stop_token object has associated stop-state and that state has received a stop request.
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp> // utx::print
+#include <utxcpp/thread.hpp> // utx::sleep
+#include <thread>
+#include <chrono>
+
+auto worker = [] (std::stop_token token) -> void
+{
+	utx::umax value{1};
+	while (true)
+	{
+		utx::printnl(value++, ' ');
+		if (value%10 == 1)
+			utx::print(); // print '\n'
+
+		if (token.stop_requested())
+			return;
+
+		utx::sleep(0.1); // sleep 0.1 second
+	}
+};
+
+int main()
+{
+	std::jthread worker_thread{worker};
+	
+	utx::sleep(7.456); // sleep 7.456 seconds
+	worker_thread.request_stop();
+	
+	worker_thread.join();
+	
+	utx::print(); // print '\n'
+	utx::sleep(1);
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::jthread: std::stop_callback]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <utxcpp/thread.hpp>
+#include <thread>
+
+int main()
+{
+	auto worker = std::jthread{
+		[] (std::stop_token token)
+		{
+			utx::u64 counter{};
+			while (true)
+			{
+				utx::print(counter++);
+				if (token.stop_requested())
+				{
+					utx::print("stop requested!");
+					return;
+				}
+				utx::sleep(0.24);
+			}
+		}
+	};
+	
+	auto starter = std::jthread{
+		[&worker] {
+			utx::sleep(3.5);
+			worker.request_stop();
+		}
+	};
+	
+	auto stop_callback = std::stop_callback{
+		worker.get_stop_token(),
+		[] {
+			utx::print("std::stop_callback is called.");
+		}
+	};
+	
+	worker.join();
+	starter.join();
+/*
+Output:
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+std::stop_callback is called.
+15
+stop requested!
+*/
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::stop_token and cv]]
+
+[*std::jthread: std::stop_token and condition variable]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+std::stop_token and std::condition_variable_any
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <utxcpp/thread.hpp>
+#include <thread>
+
+std::mutex mutex;
+
+auto worker = [] (std::stop_source source)
+{
+	std::condition_variable_any cv;
+	std::stop_token token = source.get_token();
+
+	std::unique_lock<std::mutex> lock{mutex};
+	utx::print("worker");
+
+	cv.wait(lock, token, [&token] {return token.stop_requested();});
+
+	utx::print("stop requested");
+};
+
+auto starter = [] (std::stop_source source)
+{
+	utx::sleep(2.22);
+	source.request_stop();
+};
+
+int main()
+{
+	std::stop_source source;
+	auto worker_thread = std::jthread{worker, source};
+	auto starter_thread = std::jthread{starter, source};
+	worker_thread.join();
+	starter_thread.join();
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::jthread: std::stop_source]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <utxcpp/thread.hpp>
+#include <thread>
+#include <vector>
+
+std::mutex mutex;
+
+auto worker = [] (utx::i16 id, std::stop_source source)
+{
+	std::stop_token token = source.get_token();
+	while (true)
+	{
+		std::unique_lock<std::mutex> lock{mutex};
+		utx::printnl(id, "");
+		lock.unlock();
+		if (token.stop_requested())
+			return;
+		utx::sleep(0.25);
+	}
+};
+
+auto starter = [] (std::stop_source source)
+{
+	utx::sleep(2.975);
+	source.request_stop();
+};
+
+void print_source(const std::stop_source & source)
+{
+	std::unique_lock<std::mutex> lock{mutex};
+	utx::print("\nstop possible:", source.stop_possible(), "stop requested:", source.stop_requested());
+}
+
+int main()
+{
+	std::stop_source source;
+	print_source(source);
+	
+	std::vector<std::jthread> pool;
+	for (utx::i16 i=0; i<5; i++)
+		pool.push_back(std::jthread{worker, i, source});
+	
+	pool.push_back(std::jthread{starter, source});
+	
+	print_source(source);
+	
+	for (auto & thread: pool)
+		thread.join();
+		
+	print_source(source);
+	print_source(source);
+	
+	utx::print(); // print '\n'
+}
+
+
+/*
+Output:
+
+stop possible: true stop requested: false
+0 1 2 3 4 
+stop possible: true stop requested: false
+0 1 3 2 4 0 1 2 4 3 0 1 2 4 3 0 2 1 4 3 0 2 1 4 3 0 2 3 1 4 0 2 1 4 3 0 2 4 1 3 0 2 4 3 1 0 4 3 2 1 0 4 3 2 1 0 4 3 2 1 
+stop possible: true stop requested: true
+
+stop possible: true stop requested: true
+
+*/
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::atomic std::shared_ptr]]
+
+[*std::atomic std::shared_ptr, std::weak_ptr]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[*std::weak_ptr] does [*not increase] the [*use_count()] of both [*std::weak_ptr] and [*std::shared_ptr];
+
+But [*std::shared_ptr] [*increases] the [*use_count()] of both [*std::weak_ptr] and [*std::shared_ptr].
+
+[!c++]
+```
+#include <atomic>
+#include <memory>
+#include <utxcpp/core.hpp>
+
+class fizz_box
+{
+public:
+	fizz_box()
+	{
+		utx::print("created");
+	}
+	virtual ~fizz_box()
+	{
+		utx::print("removed");
+	}
+	void print() const
+	{
+		utx::print("Fizz Box");
+	}
+};
+
+int main()
+{
+	using atomic_box = std::atomic<std::shared_ptr<fizz_box>>;
+	{
+		atomic_box box1;
+		utx::print("box1 use_count:", box1.load().use_count()); // 0
+		box1 = std::make_shared<fizz_box>();
+		utx::print("box1 use_count:", box1.load().use_count()); // 2
+		box1.load()->print();
+		
+		atomic_box box2 = std::make_shared<fizz_box>();
+		
+		atomic_box box3;
+		box3.store(std::make_shared<fizz_box>());
+	}
+	{
+		atomic_box box4 = std::make_shared<fizz_box>();
+		utx::print("box4 use_count:", box4.load().use_count()); // 2
+		{
+			atomic_box _ = box4.load();
+			utx::print("box4 use_count:", box4.load().use_count()); // 3
+			{
+				atomic_box __ = _.load();
+				utx::print("box4 use_count:", box4.load().use_count()); // 4
+			}
+		}
+		utx::print("box4 use_count:", box4.load().use_count()); // 2
+	}
+	
+	using weak_box = std::atomic<std::weak_ptr<fizz_box>>;
+	{
+		weak_box box5;
+		utx::print("box5 use_count:", box5.load().use_count()); // 0
+		
+		atomic_box box6 = std::make_shared<fizz_box>();
+		box5 = box6.load();
+		utx::print("box5 use_count:", box5.load().use_count()); // 1
+		utx::print("box6 use_count:", box6.load().use_count()); // 2
+		
+		atomic_box __ = box6.load();
+		utx::print("box5 use_count:", box5.load().use_count()); // 2
+		utx::print("box6 use_count:", box6.load().use_count()); // 3
+		
+		//weak_box ___ = __.load(); // error
+		weak_box ___;
+		___.store(__.load()); // OK
+		utx::print("box5 use_count:", box5.load().use_count()); // 2
+		utx::print("box6 use_count:", box6.load().use_count()); // 3
+		
+		weak_box ____;
+		____.store(box5.load());
+		utx::print("box5 use_count:", box5.load().use_count()); // 2
+		utx::print("box6 use_count:", box6.load().use_count()); // 3
+	}
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_Designated Initializers]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+Designated Initializers must be used for aggregate type.
+
+What is aggregate type:
+[br]
+[@https://en.cppreference.com/w/cpp/language/aggregate_initialization]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+
+class fizz_box
+{
+public:
+	double x;
+	std::string y;
+	std::complex<double> z;
+	int w;
+public:
+	// Let it be printable by utxcpp.
+	friend auto & operator<<(std::ostream & out, const fizz_box & box)
+	{
+		return out << box.x << ' ' << box.y << ' ' << box.z << ' ' << box.w;
+	}
+};
+
+int main()
+{
+	// Designated Initializer
+	fizz_box fb1{.x=2.3, .y="fizz box", .z={1.2,2.3}, .w=12}; // OK
+	utx::print(fb1);
+	
+	// Designated Initializer
+	fizz_box fb2{.y="box", .w=123}; // OK
+	utx::print(fb2);
+	
+	//fizz_box fb3{.w=321, .x=3.21}; // error: designator order does not match.
+}
+```
+
+[br][br][br][br]
+
+
+
+[h2 [_Three-Way Comparison]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[h4 Three-Way Comparison]
+
+3-way comparison (or spaceship operator)
+
+[!c++]
+```
+#include <iostream>
+#include <compare> // std::strong_ordering
+
+int main()
+{
+	int x = 123;
+	int y = 321;
+	auto result = x<=>y;
+	static_assert(std::same_as<decltype(result), std::strong_ordering>);
+	std::cout << (result<0?"<":result>0?">":"==") << std::endl;
+}
+```
+
+[h4 Default Comparator]
+
+To let two objects comparable, you have to define many operators:
+
+```
+operator<
+operator>
+operator==
+operator!=
+operator<=
+operator>=
+```
+
+However, with spaceship operator: <=>, you just need to declare one default:
+
+```
+operator<=>
+```
+
+[_Example:]
+
+[!c++]
+```
+#include <iostream>
+#include <string>
+#include <string_view>
+
+class fizz_t
+{
+private:
+	std::string str;
+	int x;
+public:
+	fizz_t(const std::string_view str, const int & x):
+		str{str}, x{x}
+	{}
+	fizz_t() = default;
+};
+
+class buzz_t
+{
+private:
+	std::string str;
+	int x;
+public:
+	buzz_t(const std::string_view str, const int & x):
+		str{str}, x{x}
+	{}
+	buzz_t() = default;
+	auto operator<=>(const buzz_t &) const  = default;
+};
+
+int main()
+{
+	fizz_t f1{"abc", 9}, f2{"abc", 7};
+	//bool result = f1 > f2; // error
+	
+	buzz_t b1{"abc", 9}, b2{"abc", 7};
+	bool result = b1 > b2; // OK
+	
+	std::cout << std::boolalpha << result << '\n'; // true
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_Map Contains]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[*std::map] has an contains method in c++20 now.
+
+[_Example]
+
+[!c++]
+```
+#include <iostream>
+#include <map>
+#include <string>
+
+using namespace std::string_literals;
+
+int main()
+{
+	std::map<std::string, std::int32_t> map {
+		{"size"s, 123},
+		{"type"s, 1},
+		{"shape"s, 9}
+	};
+	
+	if (map.contains("shape"s))
+	{
+		std::cout << map["shape"s] << std::endl; // 9
+	}
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_Range-Based-For Initialization]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+Range-Base For Loop with Initialization
+
+[_Example]
+
+[!c++]
+```
+#include <iostream>
+#include <vector>
+
+int main()
+{
+	for (std::vector vector{1,2,3,4,5,6,7,8,9}; int & x: vector)
+	{
+		static std::size_t counter{};
+		std::cout << x << (++counter==vector.size()?'\n':' ');
+	}
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::numbers]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+All numbers are constexpr.
+
+All numbers are floating point: std::floating_point.
+
+[_Example]
+
+[!c++]
+```
+#include <numbers>
+#include <utxcpp/core.hpp>
+
+namespace nb = std::numbers;
+
+int main()
+{
+// All numbers are constexpr
+// All numbers are floating point: std::floating_point
+	utx::print(
+		nb::pi,
+		nb::e,
+		nb::phi,
+		nb::egamma,
+		'\n',
+		nb::pi_v<utx::fmax>,
+		nb::e_v<utx::fmax>,
+		nb::phi_v<utx::fmax>,
+		nb::egamma_v<utx::fmax>,
+		'\n',
+		nb::inv_pi,
+		nb::inv_sqrtpi,
+		'\n',
+		nb::ln2,
+		nb::ln10,
+		nb::log2e,
+		nb::log10e,
+		'\n',
+		nb::sqrt2,
+		nb::sqrt3,
+		nb::inv_sqrt3
+	);
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::span]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+std::span is a reference to another conteguous STL container.
+
+```
+#include <utxcpp/core.hpp>
+#include <span>
+#include <vector>
+#include <algorithm>
+#include <boost/lambda/lambda.hpp>
+#include <numeric>
+
+namespace ld = boost::lambda;
+using ld::_1;
+
+int main()
+{
+	auto vector = std::vector<int>{5,4,3,2,1};
+	auto span = std::span<int>{vector};
+	utx::print_all(span); //5 4 3 2 1
+	
+	std::transform(vector.begin(), vector.end(), vector.begin(), _1*_1);
+	utx::print_all(span); //25 16 9 4 1
+	
+	std::iota(vector.begin(), vector.end(), -10);
+	utx::print_all(span); //-10 -9 -8 -7 -6
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::source_location]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[*std::source_location::current]
+
+[*std::source_location::file_name]
+
+[*std::source_location::function_name]
+
+[*std::source_location::line]
+
+[*std::source_location::column]
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <source_location>
+
+class fizz_box
+{
+public:
+	fizz_box()
+	{
+		std::source_location location = std::source_location::current();
+		utx::print(
+			"Constructor,", location.file_name(), location.line(), location.column(), location.function_name()
+		);
+	}
+	virtual ~fizz_box()
+	{
+		std::source_location location = std::source_location::current();
+		utx::print(
+			"Destructor,", location.file_name(), location.line(), location.column(), location.function_name()
+		);
+	}
+};
+
+void test(std::source_location location = std::source_location::current())
+{
+	utx::print(
+		location.file_name(), location.function_name(), location.line(), location.column()
+	);
+}
+
+inline void fn()
+{
+	test();
+}
+
+int main()
+{
+	fizz_box{};
+	fn();
+	test();
+}
+```
+
+[_Output:]
+
+[!teletype]
+```
+Constructor, fizz_box.cpp 9 64 fizz_box::fizz_box()
+Destructor, fizz_boxx.cpp 16 64 virtual fizz_box::~fizz_box()
+fizz_box.cpp void fn() 32 6
+fizz_box.cpp int main() 39 6
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::endian]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+enum class std::endian
+
+[_Example]
+
+[!c++]
+```
+#include <bit> // std::endian
+#include <utxcpp/core.hpp>
+#include <string>
+
+std::string endian()
+{
+	switch (std::endian::native)
+	{
+	case std::endian::big:
+		return "std::endian::big";
+	case std::endian::little:
+		return "std::endian::little";
+	default:
+		return "mixed";
+	}
+}
+
+int main()
+{
+	utx::print(endian());
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::bit_cast]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[!c++]
+```
+template <class To, class From>
+constexpr To bit_cast(const From & from) noexcept;
+```
+
+Every [*bit] in the value representation of the returned [*To] object [*is equal to] the corresponding [*bit] in the object representation of [*from].
+[br]
+[@https://en.cppreference.com/w/cpp/numeric/bit_cast]
+
+When it is needed to interpret the bytes of an object as a value of a different type, std::bit_cast (since C++20) can be used.
+[br]
+[@https://en.cppreference.com/w/cpp/language/reinterpret_cast]
+
+According to cppreference, [*std::bit_cast] is more safe than [*reinterpret_cast] .
+
+[!c++]
+```
+// https://en.cppreference.com/w/cpp/numeric/bit_cast
+// https://en.cppreference.com/w/cpp/language/reinterpret_cast
+
+#include <utxcpp/core.hpp>
+#include <bit> // std::bit_cast
+
+int main()
+try
+{
+	static_assert(sizeof (double) == sizeof (std::int64_t));
+	
+	double x = 0.1;
+	
+	// reinterpret_cast can not cast constexpr value, and this is undefined behavior.
+	[[maybe_unused]] std::int64_t y1 = * reinterpret_cast<std::int64_t *>(&x); // Undefined behavior.
+	
+	std::int64_t y2 = std::bit_cast<std::int64_t>(x); // OK
+	
+	double z = std::bit_cast<double>(y2); // OK
+	utx::rt_assert(x == z);
+	utx::print(x, y2, z);
+}
+catch (std::exception & e)
+{
+	utx::printe("std::exception=>", e.what());
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::byteswap]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+Reverse value by bytes.
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <bit>
+
+int main()
+{
+	constexpr utx::u32 x = 0x12345678;
+	constexpr utx::u32 y = 0x78563412;
+	static_assert(std::byteswap(x) == y);
+	static_assert(std::byteswap(y) == x);
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::popcount]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[!c++]
+```
+template <class T>
+constexpr int popcount(T x) noexcept;
+```
+
+Count how many 1-bits in [*x].
+
+[*T] must be [*unsigned] integral.
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <bit> // std::popcount
+
+int main()
+{
+	for (utx::u32 x: {0b10110101, 0b00110110})
+	{
+		utx::print(std::popcount(x));
+	}
+/*
+5
+4
+*/
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_constexpr, consteval, constinit]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[h4 constexpr]
+
+The constexpr specifier declares that it is [*possible] to evaluate the value of the function or variable [*at compile time].
+[br]
+[@https://en.cppreference.com/w/cpp/language/constexpr]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+
+template <auto fn>
+class func
+{
+public:
+	func()
+	{
+		fn();
+	}
+};
+
+constexpr auto fn = [] {utx::print("Hello, c++!");};
+
+int main()
+{
+	func<fn>{};
+	constexpr auto fn2 = [] {utx::print("Hello, boost!");};
+	func<fn2>{};
+}
+```
+
+[h4 consteval]
+
+The consteval specifier declares a [*function] or [*function template] to be an immediate function, that is, every potentially-evaluated call to the function [*must] (directly or indirectly) produce a [*compile time] constant expression.
+[br]
+[@https://en.cppreference.com/w/cpp/language/consteval]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <type_traits>
+
+template <typename T>
+consteval auto fn()
+{
+	//std::cout << "Hello, 123" << std::endl; // error: std::cout is not constexpr
+	if (std::is_constant_evaluated())
+		return 123;
+	return 100;
+}
+
+consteval auto func()
+{
+	if (std::is_constant_evaluated())
+		return 324;
+	return 200;
+}
+
+int main()
+try
+{
+	auto x = fn<utx::f32>() + func();
+	utx::rt_assert(x != 300);
+	utx::rt_assert(x == 447);
+	utx::print("Bye!");
+}
+catch (std::exception & e)
+{
+	utx::printe(e.what());
+}
+```
+
+[h4 constinit]
+
+The constinit specifier declares a [*variable] with [*static or thread storage duration]. If a variable is declared with constinit, its initializing declaration must be applied with constinit. [*If] a variable declared with constinit has [*dynamic initialization], the program is [*ill-formed]. If no constinit declaration is reachable at the point of the initializing declaration, the program is ill-formed, no diagnostic required.
+constinit cannot be used together with constexpr or consteval. 
+[br]
+[@https://en.cppreference.com/w/cpp/language/constinit]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <type_traits>
+
+constinit auto fn = []
+{
+	if (std::is_constant_evaluated())
+		return 123;
+	else
+		return 321;
+};
+
+constinit auto value1 = 9;
+
+int main()
+{
+	constexpr auto x = fn();
+	auto y = fn();
+	utx::print(x, y); //123 321
+	
+	//constinit auto value2 = 7;
+	//error: constinit can only be applied to a variable with static or thread storage duration.
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::is_constant_evaluated]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <type_traits> // std::is_constant_evaluated
+
+constexpr auto fn()
+{
+	if (std::is_constant_evaluated())
+		return true;
+	else
+		return false;
+}
+
+int main()
+{
+	auto a = fn();
+	constexpr auto b = fn();
+	utx::print(a, b); //false true
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::remove_cvref]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[h3 std::remove_cvref, std::decay, decltype, std::declval]
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+
+int main()
+{
+////////////////////////////////////////////////////////////////////////
+	int t;
+	const volatile int & x = t;
+	utx::same_assert<std::remove_cvref_t<decltype(x)>, int, true>{};
+	utx::same_assert<decltype(x), int, false>{};
+////////////////////////////////////////////////////////////////////////
+	const int y[] = {2,3,4};
+	utx::same_assert<std::decay_t<decltype(y)>, const int *, true>{};
+////////////////////////////////////////////////////////////////////////
+	class fizz_box
+	{
+	public:
+		fizz_box() = delete;
+		float get() {return 1.0f;}
+	};
+	
+	utx::same_assert<
+		decltype(
+			std::declval<fizz_box>().get()
+		),
+		float,
+		true
+	>{};
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::assume_aligned]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[!c++]
+```
+template <std::size_t N, class T>
+[[nodiscard]] constexpr T * assume_aligned(T * ptr);
+```
+
+Informs the implementation that the object ptr points to is aligned to at least N. The implementation [*may] use this information to generate [*more efficient code], but it might only make this assumption if the object is accessed via the return value of assume_aligned.
+
+The program is [*ill-formed if N is not a power of 2]. The behavior is undefined if ptr does not point to an object of type T (ignoring cv-qualification at every level), or if the object's alignment is not at least N.
+
+[@https://en.cppreference.com/w/cpp/memory/assume_aligned]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <memory> // std::assume_aligned
+
+class fizz_box
+{
+private:
+	int x{};
+	float y{};
+	double z{};
+public:
+	fizz_box(int x, float y, double z):
+		x{x}, y{y}, z{z}
+	{
+		utx::print("created");
+	}
+	virtual ~fizz_box()
+	{
+		utx::print("removed");
+	}
+	void print() const
+	{
+		utx::print(x, y, z);
+	}
+};
+
+int main()
+{
+	fizz_box * ptr = std::assume_aligned<64>(new fizz_box{123, 1.23f, 12.3});
+	ptr->print();
+	delete ptr;
+}
+
+/*
+Output:
+created
+123 1.230000 12.300000
+removed
+*/
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::string starts_with, ends_with]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <string>
+
+int main()
+{
+	std::string str = "Hello, World!";
+	utx::print(str.starts_with("Hell"), str.ends_with('!')); //true true
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_Safe Integral Comparisons]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[*Safe Integral Comparisions:]
+
+* std::cmp_equal
+* std::cmp_not_equal
+* std::cmp_less
+* std::cmp_greater
+* std::cmp_less_equal
+* std::cmp_greater_equal
+
+[!teletype]
+```
+template <typename T, typename U>
+constexpr bool cmp_???(T t, U u) noexcept;
+```
+
+[*T] and [*U] must be [*std::integral].
+
+Compare the values of two integers t and u. [*Unlike builtin] comparison operators, [*negative signed] integers [*always] compare [*less than] (and not equal to) [*unsigned] integers: [*the comparison is safe against lossy integer conversion].
+[br]
+[@https://en.cppreference.com/w/cpp/utility/intcmp]
+
+[*They are more safe than builtin integral comparison operators.]
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <utility> // std::cmp_???
+
+int main()
+try
+{
+	constexpr std::uint32_t x = 0;
+	constexpr std::int32_t y = -1;
+	static_assert(! std::cmp_greater(y, x)); // OK
+	static_assert(y > x); // Compiling pass, builtin comparison operator
+}
+catch (std::exception & e)
+{
+	utx::printe(e.what());
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::type_identity]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <type_traits> // std::type_identity
+
+template <typename T>
+void test(const T & x, const std::type_identity_t<T> & y)
+{
+	utx::print(x + y);
+}
+
+int main()
+{
+	test(1.23, 2); //3.230000
+	test(2, 1.23); //3
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::to_address]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[*std::to_address:] converts a pointer to a raw pointer.
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <memory>
+
+int main()
+{
+	auto ptr = std::make_shared<int>(123);
+	auto ptr2 = std::to_address(ptr);
+	utx::same_assert<decltype(ptr2), int *, true>{};
+	utx::same_assert<decltype(ptr), int *, false>{};
+	
+	auto ptr3 = std::make_unique<int>(321);
+	auto ptr4 = std::to_address(ptr3);
+	utx::same_assert<decltype(ptr4), int *, true>{};
+	utx::same_assert<decltype(ptr3), int *, false>{};
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::memory_order be scoped]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[*std::memory_order] becomes scoped enumeration in c++20.
+
+[!teletype]
+```
+enum class memory_order : /*unspecified*/ {
+	relaxed, consume, acquire, release, acq_rel, seq_cst
+};
+
+inline constexpr memory_order memory_order_relaxed = memory_order::relaxed;
+inline constexpr memory_order memory_order_consume = memory_order::consume;
+inline constexpr memory_order memory_order_acquire = memory_order::acquire;
+inline constexpr memory_order memory_order_release = memory_order::release;
+inline constexpr memory_order memory_order_acq_rel = memory_order::acq_rel;
+inline constexpr memory_order memory_order_seq_cst = memory_order::seq_cst;
+```
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <atomic> // std::memory_order
+
+int main()
+{
+	std::atomic<int> x;
+	x.store(123, std::memory_order_seq_cst);
+	utx::print(x.load(std::memory_order_seq_cst));
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_Likely and Unlikely]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+Likely and Unlikely attributes:
+
+```[[likely]]```
+
+```[[unlikely]]```
+
+Allow the compiler to optimize for the case where paths of execution including that statement are more or less likely than any alternative path of execution that does not include such a statement.
+[br]
+[@https://en.cppreference.com/w/cpp/language/attributes/likely]
+
+[!c++]
+```
+#include <iostream>
+
+int main()
+{
+	bool condition = true;
+	
+// if
+	[[likely]]
+	if (condition)
+		std::cout << "yes" << std::endl;
+	
+// while loop
+	[[unlikely]]
+	while (!condition)
+	{
+		std::cout << "go\n";
+		condition = true;
+	}
+	
+// switch
+	int x{};
+	switch (x)
+	{
+	case 2:
+		[[fallthrough]];
+	case 1:
+		std::cout << "+\n";
+		break;
+	
+	[[likely]]
+	case 0:
+		std::cout << "0\n";
+		break;
+	
+	[[unlikely]]
+	case -1:
+		break;
+	default:
+		break;
+	}
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_Calendar and Timezone]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+Need Compiler Support.
+
+[h4 Calendar:]
+
+[@https://en.cppreference.com/w/cpp/chrono#Calendar]
+
+[h4 Timezone:]
+
+[@https://en.cppreference.com/w/cpp/chrono#Time_zone]
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_Bounded and Unbounded Array]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+std::is_bounded_array_v
+
+std::is_unbounded_array_v
+
+[_Example]
+
+[!c++]
+```
+#include <iostream>
+#include <vector>
+#include <boost/type_index.hpp>
+#include <string>
+#include <array>
+
+template <typename type>
+class test
+{
+public:
+	test(type value = {})
+	{
+		const std::string name = boost::typeindex::type_id<type>().pretty_name();
+		
+		std::cout << "std::is_bounded_array_v<" << name << "> : "
+			<< std::is_bounded_array_v<type> << '\n';
+		std::cout << "std::is_unbounded_array_v<" << name << "> : "
+			<< std::is_unbounded_array_v<type> << '\n';
+		std::cout << std::endl;
+	}
+};
+
+int main()
+{
+	test<int>{};
+	test<std::array<int, 10>>{};
+	test<std::vector<float>>{};
+	test<int [10]>{};
+	test<int []>{};
+	int * ptr = new int[10];
+	test{ptr};
+	delete [] ptr;
+	int * ptr2 = new int{};
+	test{ptr2};
+	delete ptr2;
+	test<std::string>{};
+	test<std::string>{};
+	test<const char *>{};
+}
+```
+
+[_Output:]
+
+[!teletype]
+```
+std::is_bounded_array_v<int> : false
+std::is_unbounded_array_v<int> : false
+
+std::is_bounded_array_v<std::array<int, 10ul>> : false
+std::is_unbounded_array_v<std::array<int, 10ul>> : false
+
+std::is_bounded_array_v<std::vector<float, std::allocator<float> >> : false
+std::is_unbounded_array_v<std::vector<float, std::allocator<float> >> : false
+
+std::is_bounded_array_v<int [10]> : true
+std::is_unbounded_array_v<int [10]> : false
+
+std::is_bounded_array_v<int []> : false
+std::is_unbounded_array_v<int []> : true
+
+std::is_bounded_array_v<int*> : false
+std::is_unbounded_array_v<int*> : false
+
+std::is_bounded_array_v<int*> : false
+std::is_unbounded_array_v<int*> : false
+
+std::is_bounded_array_v<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >> : false
+std::is_unbounded_array_v<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >> : false
+
+std::is_bounded_array_v<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >> : false
+std::is_unbounded_array_v<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >> : false
+
+std::is_bounded_array_v<char const*> : false
+std::is_unbounded_array_v<char const*> : false
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_std::to_array]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+std::to_array: Convert to std::array
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <array>
+
+int main()
+{
+	float a1[] = {1.1, 2.2, 3.3};
+	std::array<float, sizeof a1/sizeof a1[0]> a11 = std::to_array(a1);
+	utx::print_all(a11);
+	
+	auto a22 = std::to_array({1,2,3,4,5});
+	utx::print_all(a22);
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[h2 [_Coroutines]]
+
+[role green ________________________________________________________________________]
+[$media/cpp20-400x100.jpg [align center] [width 400]]
+
+[*co_await - co_yield - co_return]
+
+[h3 [role green [*co_await]]]
+
+[*co_await] - The unary operator co_await suspends a coroutine and returns control to the caller.
+[br]
+[@https://en.cppreference.com/w/cpp/language/coroutines#co_await]
+
+```
+co_await expression;
+```
+
+[*asio::co_spawn] - Spawn a new coroutined-based thread of execution.
+
+[*asio::awaitable] - The return type of a coroutine or asynchronous operation.
+
+[_Example]
+
+[!c++]
+```
+#include <boost/asio.hpp>
+#include <utxcpp/core.hpp>
+#include <future>
+
+namespace asio = boost::asio;
+
+// fn must have co_await
+asio::awaitable<void> fn()
+{
+	utx::print(123);
+	co_await 0;
+	utx::print(321);
+}
+
+// func must have co_await
+asio::awaitable<void> func(float x)
+{
+	utx::print(x);
+	co_await fn();
+	utx::print("Hello, c++!");
+}
+
+int main()
+{
+	asio::io_context io_context;
+	asio::co_spawn(io_context, func(3.14f), asio::detached);
+	asio::co_spawn(io_context, fn(), asio::detached);
+	
+	auto f1 = std::async(std::launch::async, [&] {io_context.run();});
+	auto f2 = std::async(std::launch::async, [&] {io_context.run();});
+}
+
+/*
+One Possible Output:
+3.140000
+123
+321
+123Hello, c++!
+
+321
+*/
+```
+
+[h3 [role green [*co_yield]]]
+
+[*co_yield] - co_yield expression returns a value to the caller and suspends the current coroutine: it is the common building block of resumable generator functions.
+[br]
+[@https://en.cppreference.com/w/cpp/language/coroutines#co_yield]
+
+[*asio::experimental::coro] - The main type of a resumable coroutine.
+
+[*asio::this_coro::executor] - Awaitable object that returns the executor of the current coroutine.
+
+[_Example]
+
+[!c++]
+```
+#include <boost/asio.hpp>
+#include <boost/asio/experimental/coro.hpp>
+#include <utxcpp/core.hpp>
+
+namespace asio = boost::asio;
+template <typename T> using asio_coro = asio::experimental::coro<T>;
+
+asio_coro<utx::i32> fn(asio::any_io_executor, utx::i32 & x)
+{
+	while (true)
+	{
+		co_yield x++;
+	}
+}
+
+asio::awaitable<void> func(utx::i32 x)
+{
+	x = x*x;
+	auto object = fn(co_await asio::this_coro::executor, x);
+	for (utx::i32 i=0; i<10; i++)
+	{
+		auto next = co_await object.async_resume(asio::use_awaitable);
+		utx::printnl(*next, "");
+	}
+	utx::print();
+}
+
+int main()
+{
+	asio::io_context io_context;
+	asio::co_spawn(io_context, func(3), asio::detached);
+	io_context.run();
+}
+
+/*
+Output:
+9 10 11 12 13 14 15 16 17 18 
+*/
+```
+
+[h3 [role green [*co_return]]]
+
+[*co_return] - return statement in a coroutine (since C++20)
+
+[_Example]
+
+[!c++]
+```
+#include <boost/asio.hpp>
+#include <boost/asio/experimental/coro.hpp>
+#include <utxcpp/core.hpp>
+
+namespace boost::asio
+{
+	using experimental::coro;
+}
+
+namespace asio = boost::asio;
+
+asio::coro<void, int> func(asio::io_context &, int x)
+{
+	co_return x*x;
+}
+
+int main()
+{
+	asio::io_context io_context;
+	auto object = func(io_context, 7);
+	object.async_resume(
+		[&] (std::exception_ptr, int x)
+		{
+			utx::print(x); // 49
+			object.async_resume(
+				[&] (std::exception_ptr, int y)
+				{
+					utx::print(y); // 0
+				}
+			);
+		}
+	);
+	io_context.run();
+}
+```
+
+[@# Top]
+
+[br][br][br][br]
+
+
+
+[br][br][br][br]
+
+
+

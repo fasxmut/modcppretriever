@@ -17,12 +17,33 @@
 	]
 ]
 
+
+
+[include stdcpp.qbk]
 [include template.qbk]
 [include algorithm.qbk]
 
-[heading Utxcpp Fossil]
 
-Here: [@https://tiv.cc/modcppretriever]
+
+[br]
+
+[@https://tiv.cc/modcppretriever
+	[$media/modcppretriever-1000x100.jpg [width 1000] [align right]]
+]
+
+[br][br][br][br]
+
+
+
+[h2 Website]
+
+Website: [@https://tiv.cc/modcppretriever]
+
+[br][br]
+
+
+
+[h2 Go]
 
 Parent: [@https://tiv.cc]
 
@@ -31,6 +52,20 @@ Utxcpp Project: [@https://cppfx.xyz/fossil/utxcpp]
 Utxcpp Docs: [@https://cppfx.xyz/fx/static/docs/utxcpp/html]
 
 Github: [@https://github.com/fasxmut/modcppretriever]
+
+[br][br]
+
+
+
+[h2 ModcppRetriever is written using boost quickbook]
+
+Boost Quickbook: [@https://www.boost.org/tools/quickbook]
+
+[br][br]
+
+
+
+[br][br]
 
 
 

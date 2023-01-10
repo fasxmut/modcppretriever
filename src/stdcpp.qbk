@@ -5,12 +5,14 @@
 	(See accompanying file LICENSE_1_0.txt or copy at
 	http://www.boost.org/LICENSE_1_0.txt)
 ]
-[reference algorithm
+[reference Standard CPP
 	[quickbook 1.7]
 	[source-mode c++]
 ]
 
-[include algorithm-std-copy_n-memory-address.qbk]
+Standard CPP (c++)
+
+[include stdcpp-cpp20-quick-look.qbk]
 
 
 
