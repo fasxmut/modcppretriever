@@ -1,0 +1,701 @@
+[/
+	Copyright 2023 Fas Xmut
+
+	Distributed under the Boost Software License, Version 1.0.
+	(See accompanying file LICENSE_1_0.txt or copy at
+	http://www.boost.org/LICENSE_1_0.txt)
+]
+[article CPP23 IQL Jan 2023 Q1
+	[quickbook 1.7]
+	[source-mode c++]
+]
+
+
+
+[*CPP23 Incomplete Quick Look Jan 2023 Q1]
+
+CPP23: c++23 Incomplete Quick Look, January 2023, Q1.
+
+January is the first month of the new year, what will c++23 look like?
+
+[br][br]
+
+
+
+[$media/cpp-1600x80.jpg [align center]]
+
+[br][br]
+
+
+
+[*All code are passed by g++(gcc) compiler.]
+
+
+
+[table
+[[cpp23: c++23 - January 2023]]
+[[
+# [*[link multidimensional-operator Multidimensional Subscript operator[]]]
+# [*[link static-operator static operator() and operator[]]]
+# [*[link if-consteval if consteval]]
+# [*[link literal-suffix-std-size_t Literal Suffix for std::size_t]]
+# [*[link std-expected New Header: <expected> std::expected and std::unexpected]]
+# [*[link std-spanstream New Header: <spanstream> std::spanstream]]
+# [*[link std-invoke_r std::invoke_r]]
+# [*[link std-is_scoped_enum std::is_scoped_enum]]
+# [*[link elifdef-elifndef #elifdef #elifndef]]
+# [*[link std-unreachable std::unreachable]]
+# [*[link attribute-assume Attribute [[assume(expr)]]]]
+# [*[link related-links Related Links]]
+]]
+]
+
+
+
+[@# Top]
+[br][br][br][br]
+
+
+
+[#multidimensional-operator]
+
+[h2 [role green Multidimensional Subscript operator[]]]
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <vector>
+#include <numeric>
+
+class fizz_box
+{
+private:
+	int x, y, z, w;
+	std::vector<int> vector;
+public:
+	fizz_box(int x, int y, int z, int w):
+		x{x}, y{y}, z{z}, w{w},
+		vector(x*y*z*w)
+	{
+		std::iota(vector.begin(), vector.end(), 1);
+	}
+	void print_all()
+	{
+		utx::print("------------------------------------------------------------------------");
+		for (int i=0; i<x; i++)
+		{
+			for (int j=0; j<y; j++)
+			{
+				for (int k=0; k<z; k++)
+				{
+					for (int u=0; u<w; u++)
+					{
+						int index = i*y*z*w + j*z*w + k*w + u;
+						utx::printnl(vector[index], "");
+					}
+					utx::print();
+				}
+				utx::print();
+			}
+			utx::print("------------------------------------------------------------------------");
+		}
+	}
+	
+	// Multidimensional Subscript operator[]
+	int operator[](int i, int j, int k, int u)
+	{
+		int index = i*y*z*w + j*z*w + k*w + u;
+		return vector[index];
+	}
+};
+
+int main()
+{
+	fizz_box box{2,3,2,3};
+	box.print_all();
+	int i=1, j=2, k=1, u=1;
+	utx::print(i,j,k,u, "=>", box[i,j,k,u]);
+}
+```
+
+[*Output:]
+
+[!teletype]
+```
+------------------------------------------------------------------------
+1 2 3 
+4 5 6 
+
+7 8 9 
+10 11 12 
+
+13 14 15 
+16 17 18 
+
+------------------------------------------------------------------------
+19 20 21 
+22 23 24 
+
+25 26 27 
+28 29 30 
+
+31 32 33 
+34 35 36 
+
+------------------------------------------------------------------------
+1 2 1 1 => 35
+```
+
+[@# Top]
+[br][br][br][br]
+
+
+
+[#static-operator]
+
+[h2 [role green static operator() and operator[]]]
+
+[_Example]
+
+[!c++]
+```
+#include <iostream>
+
+class fizz_box
+{
+public:
+	static int operator()(int x)
+	{
+		return x*x;
+	}
+	static int operator[](int x)
+	{
+		return x*x*x;
+	}
+};
+
+int main()
+{
+	std::cout << fizz_box::operator()(3) << ' '
+		<< fizz_box::operator[](3) << std::endl;
+}
+```
+
+[@# Top]
+[br][br][br][br]
+
+
+
+[#if-consteval]
+[h2 [role green if consteval]]
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <ranges>
+
+constexpr bool func()
+{
+	if consteval
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+constexpr auto fn = []
+{
+	if ! consteval
+	{
+		return false;
+	}
+	else
+	{
+		return true;
+	}
+};
+
+int main()
+try
+{
+	static_assert(func() == true);
+	utx::rt_assert(func() == false);
+	
+	static_assert(fn() == true);
+	utx::rt_assert(fn() == false);
+}
+catch (std::exception & e)
+{
+	utx::printe(e.what());
+}
+```
+
+[@# Top]
+[br][br][br][br]
+
+
+
+[#literal-suffix-std-size_t]
+
+[h2 [role green Literal Suffix for std::size_t]]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+
+int main()
+{
+	// Literal suffix for std::size_t
+	auto x = 123uz;
+	
+	utx::same_assert<decltype(x), std::size_t, true>{};
+}
+```
+
+[@# Top]
+[br][br][br][br]
+
+
+
+[#std-expected]
+[h2 [role green New Header: <expected> std::expected and std::unexpected]]
+
+[*std::expected]: The class template std::expected provides a way to store either of two values. An object of std::expected at any given time either holds an expected value of type T, or an unexpected value of type E. std::expected is never valueless.
+
+[*std::unexpected]: The class template std::unexpected represents an unexpected value stored in std::expected.
+
+[h4 std::expected, std::unexpected, .has_value(), .value(), .operator*]
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <expected>
+
+int main()
+{
+	std::expected<float, int> exp{123.5};
+	utx::print(exp.value(), *exp); //123.5 123.5
+	
+	std::expected<float, int> exp2;
+	utx::print(exp2.has_value(), exp2.value(), *exp2); //true 0.0 0.0
+	
+	exp2 = 3.14;
+	if (exp2.has_value())
+		utx::print(exp2.value()); //3.14
+	
+	// std::unexpected !
+	exp2 = std::unexpected(9);
+	utx::print(! exp2.has_value(), exp2 == std::unexpected(9)); //true true
+}
+```
+
+[h4 .value_or, .swap]
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <expected>
+
+int main()
+{
+	std::expected<float, int> exp{2.5f};
+	utx::print(exp.value_or(5.2f)); //2.5
+	
+	exp = std::unexpected(123);
+	utx::print(exp.value_or(1.5f)); // 1.5
+	
+	exp = 7.2f;
+	
+	std::expected<float, int> exp2{9.3f};
+	exp.swap(exp2);
+	utx::print(exp.has_value(), exp.value(), exp2.has_value(), exp2.value()); //true 9.3 true 7.2
+}
+```
+
+[h4 .operator->]
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <expected>
+#include <type_traits> // std::is_aggregate
+
+class fizz_box
+{
+public:
+	utx::f32 x{};
+	utx::string y{};
+public:
+	void print() const
+	{
+		utx::print("(", x, ",", y, ")");
+	}
+};
+static_assert(std::is_aggregate_v<fizz_box>);
+
+int main()
+{
+	std::expected<fizz_box, std::string> exp{{1.2f, "c++20"}};
+	
+	utx::rt_assert(exp.has_value());
+	exp->print(); // operator->
+	
+	exp = fizz_box{2.3f, "c++23"};
+	utx::rt_assert(exp.has_value());
+	exp->print(); // operator->
+	
+	exp = std::unexpected{"no value"};
+	utx::rt_assert(! exp.has_value());
+}
+```
+
+[@# Top]
+[br][br][br][br]
+
+
+
+[#std-spanstream]
+[h2 [role green New Header: <spanstream> std::spanstream]]
+
+[*std::spanstream] - The class template std::basic_spanstream implements input and output operations on streams based on fixed buffers.
+
+At the low level, the class essentially wraps a raw device implementation of std::basic_spanbuf into a higher-level interface of std::basic_iostream. The complete interface to unique std::basic_spanbuf members is provided.
+
+Typical implementations of std::basic_spanstream only add one member subobject: the wrapped std::basic_spanbuf.
+
+[*std::basic_spanstream] is derived from [*std::basic_iostream] .
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <array>
+#include <spanstream>
+#include <span>
+#include <string>
+
+int main()
+{
+	std::array<char, 1024> array;
+	std::span<char> span{array};
+	std::spanstream spanstream{span};
+	
+	spanstream.write("c++23!", 6);
+	utx::print_all(array); //c + + 2 3 !
+	
+	spanstream << 1024 << "c++23!";
+	utx::print_all(array); //c + + 2 3 ! 1 0 2 4 c + + 2 3 !
+	
+	std::string str;
+	str.resize(1024);
+	std::spanstream ss{std::span<char>{str}};
+	ss << "c++23!";
+	
+	utx::print_all(str); //c + + 2 3 !
+	utx::print(str); //c++23!
+	utx::print(str.data()); //c++23!
+}
+```
+
+[@# Top]
+[br][br][br][br]
+
+
+
+[#std-invoke_r]
+[h2 [role green std::invoke_r]]
+
+[!c++]
+```
+template <class R, class F, class ... Args>
+constexpr R invoke_r(F && f, Args && ... args) noexcept;
+```
+
+[*Usage:]
+```
+auto r = std::invoke_r<R>(func, args ...);
+```
+
+Convert the result to type [*R], if it is convertible to R.
+
+[_Example]
+
+[!c++]
+```
+#include <functional> // std::invoke, std::invoke_r
+#include <utxcpp/core.hpp>
+#include <string_view>
+
+auto fn = [] (utx::u8 x, utx::u8 y) -> utx::u8
+{
+	return x+y;
+};
+
+int main()
+{
+	auto r1 = std::invoke(fn, 12, 100);
+	auto r2 = std::invoke_r<utx::u16>(fn, 12, 100);
+	
+	utx::same_assert<decltype(r1), utx::u8, true>{};
+	utx::same_assert<decltype(r2), utx::u8, false>{};
+	utx::same_assert<decltype(r2), utx::u16, true>{};
+	
+	utx::rt_assert(std::cmp_equal(r1, r2));
+}
+```
+
+[@# Top]
+[br][br][br][br]
+
+
+
+[#std-is_scoped_enum]
+
+[h2 [role green std::is_scoped_enum]]
+
+[*std::is_scoped_enum]
+
+[*std::is_scoped_enum_v]
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <type_traits> // std::is_scoped_enum, std::is_scoped_enum_v
+#include <atomic>
+
+class A;
+enum class B;
+enum C {};
+
+int main()
+{
+	utx::print(
+		std::is_scoped_enum_v<A>,
+		std::is_scoped_enum_v<B>,
+		std::is_scoped_enum_v<C>,
+		std::is_scoped_enum_v<int>,
+		std::is_scoped_enum_v<std::memory_order>
+	);
+	//false true false false true
+}
+```
+
+[@# Top]
+[br][br][br][br]
+
+
+
+[#elifdef-elifndef]
+[h2 [role green #elifdef #elifndef]]
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+
+int main()
+{
+#ifdef b2
+	utx::print("b2 build is used");
+#elifdef bjam
+	utx::print("bjam build is used");
+#elifndef build
+	utx::print("no build system");
+#else
+	utx::print("unknown build system");
+#endif
+}
+```
+
+[*Run:]
+
+[!teletype]
+```
+b2
+b2 -a define=b2
+b2 -a define=bjam
+b2 -a define=build
+```
+
+[@# Top]
+[br][br][br][br]
+
+
+
+[#std-unreachable]
+[h2 [role green std::unreachable]]
+
+Invokes [*undefined behavior]. An implementation may use this to optimize impossible code branches away (typically, in optimized builds) or to trap them to prevent further execution (typically, in debug builds).
+[br]
+[@https://en.cppreference.com/w/cpp/utility/unreachable]
+
+[_Example 1]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <utility> // std::unreachable
+
+namespace pk
+{
+	template <utx::kspt::real_number T>
+	inline utx::fmax sqrt(const T & x)
+	{
+		if (x < 0)
+		{
+			utx::print("a");
+			std::unreachable();
+			utx::print("b");
+		}
+		utx::print("c");
+		return std::sqrt<utx::fmax>(x).real();
+	}
+}
+
+int main()
+{
+	utx::print(pk::sqrt(9));
+	utx::print(pk::sqrt(-9));
+}
+
+/*
+Output:
+c
+3.000000
+a
+c
+0.000000
+*/
+```
+
+[_Example 2]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+#include <utility> // std::unreachable
+
+int fn(int x)
+{
+	switch (x)
+	{
+	case 1:
+		[[fallthrough]];
+	case 2:
+		return 3;
+	default:
+		std::unreachable();
+		return 7;
+	}
+	return 10;
+}
+
+int main()
+{
+	utx::print(fn(1));
+	utx::print(fn(10000));
+}
+
+/*
+Output:
+3
+9999
+*/
+```
+
+[@# Top]
+[br][br][br][br]
+
+
+
+[#attribute-assume]
+[h2 [role green Attribute [[assume(expr)]]]]
+
+Specifies that an expression will always evaluate to true at a given point.
+[br]
+[@https://en.cppreference.com/w/cpp/language/attributes/assume]
+
+[_Example]
+
+[!c++]
+```
+#include <utxcpp/core.hpp>
+
+utx::i32 fn(utx::i32 x)
+{
+	[[assume(x>0)]];
+	return ++x;
+}
+
+int main()
+{
+	fn(123); // more efficient
+	fn(-123); // less efficient
+}
+```
+
+[@# Top]
+[br][br][br][br]
+
+
+
+[#related-links]
+[h2 [role green Related Links]]
+
+
+
+[*[role indigo Utxcpp Project]]
+
+[@https://cppfx.xyz/fossil/utxcpp]
+
+[br][br][br][br]
+
+
+
+[*[role indigo cppreference c++23]]
+
+[@https://en.cppreference.com/w/cpp/23]
+
+[br][br][br][br]
+
+
+
+[*[role indigo Boost c++ Libraries]]
+
+[@https://www.boost.org]
+
+[br][br][br][br]
+
+
+
+[@# Top]
+[br][br][br][br]
+
+
+
+[br][br][br][br]
+[br][br][br][br]
+[br][br][br][br]
+[br][br][br][br]
+[br][br][br][br]
+[br][br][br][br]
+
+
+
